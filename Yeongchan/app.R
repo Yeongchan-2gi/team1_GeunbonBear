@@ -116,16 +116,16 @@ ui <- fluidPage(
       tabPanel('기대수명', plotlyOutput('graph_expectLifeB')),
       tabPanel('5가지 항목', plotOutput('graph_five')),
       # tabPanel('col', plotlyOutput('graph_infantB')),
-      tabPanel('2가지 항목', plotlyOutput('graph_birth_infant')),
+      tabPanel('2가지 항목', plotOutput('graph_birth_infant')),
     )
   ),
-
+  
   # plotlyOutput('graph_urban'),
   # plotlyOutput('graph_expectLifeB'),
   # plotOutput('graph_five'),
   # plotlyOutput('graph_infantB'),
   # plotlyOutput('graph_birth_infant'),
-
+  
   # plotlyOutput('graph', click = 'plot_click'),
   # tags$h3('이거슨 사용자 클릭에 반응하기:'),
   # tableOutput('data')
@@ -267,7 +267,7 @@ server <- function(input, output){
       ylab("Assigned Probability (%)")
   })
   # 출생률과 영아사망률----
-  output$graph_birth_infant <- renderPlotly({
+  output$graph_birth_infant <- renderPlot({
     
     coeff <- 1/10
     
