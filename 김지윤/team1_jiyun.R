@@ -79,20 +79,8 @@ names(m_df) <- c('individual', 'observation', 'value', 'group')
 
 head(m_df, 5)
 
-data <- data.frame(
-  individual=paste( "Mister ", seq(1,60), sep=""),
-  group=c( rep('A', 10), rep('B', 30), rep('C', 14), rep('D', 6)) ,
-  value1=sample( seq(10,100), 60, replace=T),
-  value2=sample( seq(10,100), 60, replace=T),
-  value3=sample( seq(10,100), 60, replace=T)
-)
-
-# Transform data in a tidy format (long format)
-data <- data %>% gather(key = "observation", value="value", -c(1,2))
 
 
-str(data)
-str(m_df)
 
 
 
@@ -100,8 +88,12 @@ head(data)
 str(data)
 str(m_df)
 m_df$value <- as.integer(m_df$value)
-str
+
 data <- m_df
+str(data)
+
+write.csv(data,"data.csv")
+## 그래프1
 empty_bar <- 2
 nObsType <- nlevels(as.factor(data$observation))
 to_add <- data.frame( matrix(NA, empty_bar*nlevels(data$group)*nObsType, ncol(data)) )
@@ -174,7 +166,6 @@ library(gifski)
 gdp <- read_excel('./1인당국내총생산.xlsx')
 melt(gdp, id.vars=c('year', 'country_work'))
 
-
 gdp <-data.frame(gdp) # df로 변환
 #data_1p_gdp <- data_dead[c(1:15),] # 20년도까지만 추출
 gdp <- melt(gdp,id.vars=c('시점'))
@@ -187,19 +178,19 @@ m_act_pop$continent <- continent
 m_work_pop$continent <- continent
 head(m_work_pop)
 result=cbind(m_act_pop_result,m_work_pop_result=m_work_pop_result[3])
-head(result,100)
-
+head(result)
 head(df)
+
+#그래프2
 myplot<-ggplot(df, aes(act_pop,work_pop, size=10,color=continent))+
   geom_point()+
   scale_x_log10() +
   theme_bw()+
-  labs(title = 'Year: {frame_time}', x='birth', y = 'dead')+
+  labs(title = 'Year: {frame_time}', x='활동가능인구', y = '취업인구')+
   transition_time(year) +
   ease_aes('linear')
 animate(myplot, duration = 5, fps = 20, width = 500, height = 500, renderer = gifski_renderer())
-
-
+anim_save('bubble.gif')
 
 # 대륙별
 # Get data:
@@ -209,7 +200,7 @@ library(gapminder)
 library(ggplot2)
 library(gganimate)
 
-# Make a ggplot, but add frame=year: one image per year
+# 그래프3_그래프2를 대륙별로 나눈 그래프
 ggplot(df, aes(act_pop,work_pop, colour=continent)) +
   geom_point(alpha = 0.7, show.legend = FALSE) +
   #scale_colour_manual(values = country_colors) +
@@ -231,18 +222,21 @@ library(gganimate)
 library(gifski)
 #install.packages('ggthemes')
 life_ex <- read.csv('./life_ex.csv')
-
+life_ex_plotly <- read_excel('./기대수명.xlsx')
 
 #plotting static plot
 life_ex$Value <- as.integer(life_ex$Value)
 life_ex_1 <- life_ex[, c('LOCATION', 'TIME', 'Value')]
 
 life_ex_6 <- aggregate(Value~LOCATION+TIME, life_ex_1, sum)
-life_ex_2<-life_ex_6 %>% group_by(TIME) %>% mutate(rank = row_number(-Value) * 1) %>%
-  ungroup()
+life_ex_2<-life_ex_6 %>% group_by(TIME) %>% transmute(TIME, rank = rank(-Value))
+life_ex_6$rank <- life_ex_2$rank
+str(life_ex_6)
 str(life_ex_2)
 unique(life_ex_2$rank)
-static_plot<-ggplot(life_ex_2,aes(x=Value, group=LOCATION,fill=as.factor(LOCATION),color=as.factor(LOCATION))) +
+
+# 그래프4_기대수명 그래프
+static_plot<-ggplot(life_ex_6,aes(x=Value, group=LOCATION,fill=as.factor(LOCATION),color=as.factor(LOCATION))) +
   geom_tile(aes(y = Value/2,
                 height = Value,
                 width = 0.9), alpha = 0.8, color = NA) +
@@ -271,5 +265,126 @@ plt<-static_plot + transition_states(states =TIME, transition_length = 4, state_
 #rendering the animation for gif
 final_animation<-animate(plt,100,fps = 20,duration = 30, width = 950, height = 750, renderer = gifski_renderer())
 final_animation
+anim_save('final_animation.gif')
 #rendering the animation for mp4
 animate(plt,100,fps = 20,duration = 30, width = 950, height = 750, renderer = ffmpeg_renderer())
+
+
+life_ex_1
+
+plotly_result <- life_ex_1 %>% filter(TIME%in%c(2005:2016))
+plotly_gdp <- plotly_gdp %>% filter(TIME%in%c(2005:2016))
+plotly_result
+plotly_gdp <- read.csv('./gdp.csv')
+plotly_result$gdp <- plotly_gdp$Value
+
+options(max.print = 10000)
+str(gdp)
+gdp_plotly <- gdp %>% filter(시점%in%c(2000:2020))
+df_plotly <- df %>% filter(year%in%c(2000:2020))
+str(df_plotly)
+str(gdp_plotly)
+df_plotly$gdp <- gdp_plotly$value
+
+
+df_plotly_1 <- df_plotly %>% filter(year%in%c(2020))
+#----------------------------------------------------------------------------------------------
+life_ex_plotly <- read_excel('./기대수명.xlsx')
+v <- c()
+for (i in c(1, seq(4, 115, 2))) v <- c(v, life_ex_plotly[, i])
+life_ex_plotly <- data.frame(v)
+life_ex_plotly <- life_ex_plotly[-1, ]
+life_ex_plotly <- life_ex_plotly[c(41:62), ]
+m_life_ex_plotly<-melt(work_pop, id.vars=c('시점'))
+m_life_ex_plotly$시점 <- as.numeric(m_life_ex_plotly$시점)
+m_life_ex_plotly$value <- as.numeric(m_life_ex_plotly$value)
+names(m_life_ex_plotly) <- c('year', 'country', 'life_exp')
+m_life_ex_plotly
+v <- c()
+for (i in m_life_ex_plotly$country) {
+  j <- str_replace(i, '\\...', ' ')  # ... 제거 
+  v <- c(v, strsplit(j, ' ')[[1]][1])  # 숫자 제거
+}
+m_life_ex_plotly$country <- v
+df_plotly_1
+
+head(m_life_ex_plotly)
+
+# 열 추출
+v <- c()
+for (i in c(1, seq(2, 130, 3))) v <- c(v, life_ex_plotly[, i])
+v
+# 프레임화
+life_ex_plotly <- data.frame(v)
+life_ex_plotly <- life_ex_plotly[-1, ]
+head(life_ex_plotly, 10)
+
+# 컬럼명 처리
+library(stringr)
+
+v <- c()
+for (i in colnames(life_ex_plotly)) {
+  j <- str_replace(i, '\\...', ' ')  # ... 제거 
+  v <- c(v, strsplit(j, ' ')[[1]][1])  # 숫자 제거
+}
+
+colnames(life_ex_plotly) <- v
+colnames(life_ex_plotly)
+head(life_ex_plotly)
+df_plotly_1
+write.csv(df_plotly_1, 'df_plotly_1.csv')
+#대륙 처리
+rem <- c('아시아', '북아메리카', '남아메리카', '유럽', '오세아니아')
+
+u <- c()
+for (i in colnames(life_ex_plotly)) {
+  for (j in rem) {
+    if (i==j) u <- c(u, which(colnames(life_ex_plotly) == i))  # 대륙 인덱스 찾기
+  }
+}
+
+life_ex_plotly <- life_ex_plotly[, -u]
+#
+# life_ex_plotly$continent <- ifelse(life_ex_plotly$country %in% c('대한민국', '이스라엘', '일본', '튀르키예'),"아시아",
+#        ifelse(life_ex_plotly$countryk %in% c('캐나다','멕시코','미국'), '북아메리카', 
+#               ifelse(life_ex_plotly$country %in% c('칠레','콜롬비아','코스타리카'), '남아메리카',
+#                      ifelse(life_ex_plotly$country %in% c('오스트레일리아','뉴질랜드'), '오세아니아', '유럽')))) 
+# # 인덱스를 정리, 형 변환
+rownames(life_ex_plotly) <- 1:dim(life_ex_plotly)[1]
+
+life_ex_plotly$시점 <- factor(life_ex_plotly$시점)
+for (i in colnames(life_ex_plotly)[2:dim(life_ex_plotly)[2]]) {
+  life_ex_plotly[[i]] <- as.numeric(life_ex_plotly[[i]])
+}
+
+
+t <- c()
+
+for (i in colnames(life_ex_plotly)) {
+  t <- c(t, life_ex_plotly[[i]])
+}
+t
+df_plotly_1$life_exp <- t[2:length(t)]
+df_plotly_1
+write.csv(df_plotly_1, 'df_plotly_1.csv')
+
+##plotly
+df_plotly_1 %>% 
+  filter(year == 2020) %>% 
+  plot_ly(x = ~gdp, y = ~life_exp, color = ~continent) %>% 
+  add_markers(colors = "Dark2")
+
+life_exp
+write.csv(life_exp,"life_exp.csv")
+
+gap_loess <- loess(life_exp ~ gdp, data = df_plotly_1)
+gap_lm    <- lm(life_exp ~ gdp, data = df_plotly_1)
+
+df_plotly_1 %>% 
+  plot_ly(x = ~gdp, y = ~life_exp, hoverinfo = "text",
+          text = ~paste0("<b>", "OECD_POP", "</b> <br>",
+                         "인당 GDP: ", gdp, "<br>",
+                         "기대수명: ", life_exp)) %>% 
+  add_markers(colors = c("orange", "darkgray", "skyblue", "black", "red"), showlegend = FALSE) %>% 
+  add_lines(y = ~fitted(gap_lm), name = "회귀선") %>% 
+  add_lines(y = ~fitted(gap_loess), name = "LOESS")
