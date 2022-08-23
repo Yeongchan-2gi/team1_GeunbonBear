@@ -1,0 +1,14 @@
+name: 9th_weeks_team1
+title: 9th_weeks_team1
+username:
+account: minsoo-s
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6828560
+bundleId: 6228027
+url: https://minsoo-s.shinyapps.io/9th_weeks_team1/
+when: 1661228909.18887
+lastSyncTime: 1661228909.18891
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|test_barRace.r
