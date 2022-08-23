@@ -230,17 +230,17 @@ library(ggthemes)
 library(gganimate)
 library(gifski)
 #install.packages('ggthemes')
-life_ex <- read.csv('../life_ex.csv')
+life_ex <- read.csv('./life_ex.csv')
 
-str(life_ex_2)
+
 #plotting static plot
-life_ex_1$Value <- as.integer(life_ex$Value)
+life_ex$Value <- as.integer(life_ex$Value)
 life_ex_1 <- life_ex[, c('LOCATION', 'TIME', 'Value')]
 
 life_ex_6 <- aggregate(Value~LOCATION+TIME, life_ex_1, sum)
 life_ex_2<-life_ex_6 %>% group_by(TIME) %>% mutate(rank = row_number(-Value) * 1) %>%
   ungroup()
-
+str(life_ex_2)
 unique(life_ex_2$rank)
 static_plot<-ggplot(life_ex_2,aes(x=Value, group=LOCATION,fill=as.factor(LOCATION),color=as.factor(LOCATION))) +
   geom_tile(aes(y = Value/2,
@@ -265,88 +265,11 @@ static_plot<-ggplot(life_ex_2,aes(x=Value, group=LOCATION,fill=as.factor(LOCATIO
 #creating final animation
 plt<-static_plot + transition_states(states =TIME, transition_length = 4, state_length = 1) + 
   ease_aes('cubic-in-out') +
-  #view_follow(fixed_x = TRUE) +
-  labs(title = 'Total Suicides per Year : {closest_state}', 
+  labs(title = 'Life expectancy at birth _ {closest_state}', 
        subtitle = 'Top 10 Countries',
-       caption = 'Data Source: World Bank Data',
-       x='Countries',y='Total Suicides per year')
+       x='Countries',y='Life expectancy at birth')
 #rendering the animation for gif
 final_animation<-animate(plt,100,fps = 20,duration = 30, width = 950, height = 750, renderer = gifski_renderer())
 final_animation
 #rendering the animation for mp4
 animate(plt,100,fps = 20,duration = 30, width = 950, height = 750, renderer = ffmpeg_renderer())
-# -------------------------------------------------------------------------------
-library(tidyverse)
-library(reshape2)
-library(ggthemes)
-library(gganimate)
-library(gifski)
-
-suicide_data <- read.csv('./kaggle.csv', header = TRUE,stringsAsFactors = FALSE)
-suicide_sub<-suicide_data %>% select("country","year" ,"sex","suicides_no")
-#function to sum the total suicide per country
-n<-unique(suicide_sub$country)
-country<-function(x){
-  suicide2<-suicide_sub %>% filter(country==x)
-  sum(suicide2$suicides_no)
-}
-suicide2$suicides_no
-#return a list with all total deaths per country
-country_total<-sapply(n,function(x) country(x))
-country_total
-#creating a dataframe with top 10 total suicides per country
-df<-do.call(rbind,Map(data.frame,Country=n,Total_Suicides=country_total))
-df2<-df %>% arrange(desc(Total_Suicides))
-df3<-head(df2,n=10)
-df3
-write.csv(df3,"./total_suicide.csv")
-#plotting the top 10 countries leading in the total suicide rates
-ggplot(df3,aes(reorder(Country,Total_Suicides),Total_Suicides,fill=as.factor(Country)))+
-  geom_col()+
-  coord_flip(clip = "off", expand = FALSE)+
-  guides( fill = FALSE) +
-  labs(title="TOTAL SUICIDE DEATHS PER COUNTRY FROM 1985-2016", 
-       y="Total Suicides Per Country", x="Country")+
-  scale_y_continuous(labels = scales::comma) +
-  geom_text(aes(label = paste(Total_Suicides,"")), hjust = 1)
-#subset initial data with top 10 countries
-top_suicide<-suicide_sub%>%filter(country==c('Russian Federation','United States','Japan','France','Ukraine','Germany','Republic of Korea','Brazil','Polan','United Kingdom'))
-top_suicide
-#filtering years with consistent data
-top_suicide2<-top_suicide %>% filter(year %in%c(1990:2014)) 
-top_suicide2
-top_suicide2$sex<-as.factor(top_suicide2$sex)
-#summing the total male & female suicides per country for each year
-sm3<-aggregate(suicides_no~country+year,top_suicide2,sum)
-life_ex_1 <- aggregate(Value~LOCATION+TIME, life_ex, sum)
-life_ex_1
-#* 1 ensures we have non-integer ranks while sliding
-sm4<-sm3 %>% group_by(year) %>% mutate(rank = min_rank(-suicides_no) * 1) %>%
-  ungroup()
-sm3
-suicides_no
-life_ex_1 <- life_ex[, c('LOCATION', 'TIME', 'Value')]
-life_ex_1
-life_ex_2<-life_ex_1 %>% group_by(TIME) %>% mutate(rank = min_rank(Value) * 1) %>%
-  ungroup()
-
-
-static_plot<-ggplot(sm4,aes(rank,group=country,fill=as.factor(country),color=as.factor(country))) +
-  geom_tile(aes(y = suicides_no/2,
-                height = suicides_no,
-                width = 0.9), alpha = 0.8, color = NA) +
-  geom_text(aes(y = 0, label = paste(country, '')), vjust = 0.2, hjust = 1) +
-  geom_text(aes(y=suicides_no,label = paste('',suicides_no)), hjust=0)+
-  coord_flip(clip = 'off', expand = TRUE) +
-  scale_y_continuous(labels = scales::comma) +
-  scale_x_reverse() +
-  guides(color = 'none', fill = 'none') +
-  theme_minimal() +
-  theme(
-    plot.title=element_text(size=25, hjust=0.5, face='bold', colour='grey', vjust=-1),
-    plot.subtitle=element_text(size=18, hjust=0.5, face='italic', color='grey'),
-    plot.caption =element_text(size=8, hjust=0.5, face='italic', color='grey'),
-    axis.ticks.y = element_blank(), 
-    axis.text.y = element_blank(), 
-    plot.margin = margin(1,1,1,4, 'cm')
-  )
