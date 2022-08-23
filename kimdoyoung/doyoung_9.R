@@ -325,6 +325,11 @@ ggplot(DF, aes(x=대륙, y=장래인구, fill=노령화지수))+
 
 # shiny
 ui <- fluidPage(
+  
+  tags$h1('1조 김도영'),
+  tags$h3('OECD 국가 인구 데이터'),
+  tags$h5('출처 : 통계청'),
+  
   mainPanel(
     tabsetPanel(
       tabPanel('interactive1', h1('interactive graph1'), plotlyOutput('mytable2')),
